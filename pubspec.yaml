@@ -1,0 +1,40 @@
+name: city_guide
+description: City Guide - discover attractions, restaurants, hotels and events.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # Firebase
+  firebase_core: ^2.27.0
+  firebase_auth: ^4.17.4
+  cloud_firestore: ^4.15.5
+  firebase_storage: ^11.6.6
+
+  # State management
+  provider: ^6.1.2
+
+  # Maps & location (used from Status Report 2 onward)
+  google_maps_flutter: ^2.6.0
+  geolocator: ^11.0.0
+
+  # UI helpers
+  cached_network_image: ^3.3.1
+  image_picker: ^1.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
