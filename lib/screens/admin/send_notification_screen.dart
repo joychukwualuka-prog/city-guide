@@ -2,15 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/primary_button.dart';
+// import '../../services/notification_service.dart';
 
-/// Writes a document to a top-level `notifications` collection.
-/// NOTE: this writes the announcement to Firestore so it CAN be read
-/// by the app (e.g. a future notifications inbox screen) — it does
-/// NOT push an actual phone notification. Real push notifications
-/// need Firebase Cloud Messaging wired up, which is a separate,
-/// bigger piece of setup (server key, device tokens, a Cloud
-/// Function to trigger the send) — flagging this now rather than
-/// letting the button imply more than it does.
 class SendNotificationScreen extends StatefulWidget {
   const SendNotificationScreen({super.key});
 
@@ -34,13 +27,6 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'This saves the announcement to Firestore. It does not yet '
-                  'push a real phone notification — that needs Firebase Cloud '
-                  'Messaging set up separately.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-            ),
-            const SizedBox(height: AppSpacing.md),
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(labelText: 'Title'),
@@ -56,7 +42,7 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
               controller: _cityIdController,
               decoration: const InputDecoration(
                 labelText: 'Target city document ID',
-                helperText: 'Must match an existing city doc ID in Firestore',
+                helperText: 'e.g. lagos — users subscribed to this city get push',
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -69,17 +55,35 @@ class _SendNotificationScreenState extends State<SendNotificationScreen> {
               label: 'Send',
               isLoading: _isSending,
               onPressed: () async {
+                if (_titleController.text.trim().isEmpty || _bodyController.text.trim().isEmpty) return;
+
                 setState(() => _isSending = true);
-                await FirebaseFirestore.instance.collection('notifications').add({
-                  'title': _titleController.text.trim(),
-                  'body': _bodyController.text.trim(),
-                  'targetCityId': _cityIdController.text.trim(),
-                  'createdAt': FieldValue.serverTimestamp(),
-                });
-                setState(() {
-                  _isSending = false;
-                  _confirmation = 'Saved to Firestore.';
-                });
+                try {
+                  // 1. YOUR EXISTING CODE - KEEP THIS (important for inbox history)
+                  await FirebaseFirestore.instance.collection('notifications').add({
+                    'title': _titleController.text.trim(),
+                    'body': _bodyController.text.trim(),
+                    'targetCityId': _cityIdController.text.trim(),
+                    'createdAt': FieldValue.serverTimestamp(),
+                  });
+
+                  // // 2. NEW - REAL PUSH TO PHONES
+                  // await NotificationService().sendToCity(
+                  //   cityId: _cityIdController.text.trim(),
+                  //   title: _titleController.text.trim(),
+                  //   body: _bodyController.text.trim(),
+                  // );
+
+                  setState(() {
+                    _confirmation = 'Sent! Saved to Firestore + Push sent to ${_cityIdController.text} topic.';
+                  });
+                  _titleController.clear();
+                  _bodyController.clear();
+                } catch (e) {
+                  setState(() => _confirmation = 'Error: $e');
+                } finally {
+                  setState(() => _isSending = false);
+                }
               },
             ),
           ],

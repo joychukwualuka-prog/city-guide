@@ -54,7 +54,9 @@ class AttractionModel {
       contact: map['contact'] ?? '',
       openingHours: map['openingHours'] ?? '',
       avgRating: (map['avgRating'] ?? 0).toDouble(),
-      ratingCount: map['ratingCount'] ?? 0,
+      // Firestore can hand this back as an int OR a double depending on
+      // how it was typed in the console — (...).toInt() handles both.
+      ratingCount: ((map['ratingCount'] ?? 0) as num).toInt(),
     );
   }
 

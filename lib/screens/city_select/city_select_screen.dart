@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/app_theme.dart';
 import '../../models/city_model.dart';
 import '../../services/firestore_service.dart';
+import '../../services/notification_service.dart';
 
 class CitySelectScreen extends StatefulWidget {
   final ValueChanged<CityModel> onCitySelected;
@@ -115,7 +116,18 @@ class _CitySelectScreenState extends State<CitySelectScreen> {
             ),
             const SizedBox(height: AppSpacing.md),
             ElevatedButton(
-              onPressed: _selected == null ? null : () => widget.onCitySelected(_selected!),
+              onPressed: _selected == null
+                  ? null
+                  : () async {
+                await NotificationService()
+                    .subscribeToCity(
+                  _selected!.id,
+                );
+
+                widget.onCitySelected(
+                  _selected!,
+                );
+              },
               child: const Text('Continue'),
             ),
           ],

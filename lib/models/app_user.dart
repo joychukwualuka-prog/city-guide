@@ -7,6 +7,7 @@ class AppUser {
   final String? photoUrl;
   final List<String> favoriteAttractionIds;
   final bool notificationsEnabled;
+  final String role;
 
   AppUser({
     required this.uid,
@@ -15,17 +16,33 @@ class AppUser {
     this.photoUrl,
     this.favoriteAttractionIds = const [],
     this.notificationsEnabled = true,
+    this.role = 'user',
   });
 
-  factory AppUser.fromMap(String uid, Map<String, dynamic> map) {
+  bool get isAdmin => role == 'admin';
+  bool get isUser => role == 'user';
+
+  factory AppUser.fromMap(
+      String uid,
+      Map<String, dynamic> map,
+      ) {
+    // Supports your old isAdmin field while you migrate
+    // existing users to the new role field.
+    final role = map['role'] ??
+        (map['isAdmin'] == true ? 'admin' : 'user');
+
     return AppUser(
       uid: uid,
       name: map['name'] ?? '',
       email: map['email'] ?? '',
       photoUrl: map['photoUrl'],
       favoriteAttractionIds:
-      List<String>.from(map['favoriteAttractionIds'] ?? const []),
-      notificationsEnabled: map['notificationsEnabled'] ?? true,
+      List<String>.from(
+        map['favoriteAttractionIds'] ?? const [],
+      ),
+      notificationsEnabled:
+      map['notificationsEnabled'] ?? true,
+      role: role,
     );
   }
 
@@ -36,6 +53,7 @@ class AppUser {
       'photoUrl': photoUrl,
       'favoriteAttractionIds': favoriteAttractionIds,
       'notificationsEnabled': notificationsEnabled,
+      'role': role,
     };
   }
 }

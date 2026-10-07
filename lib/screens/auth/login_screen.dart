@@ -391,12 +391,44 @@ class _LoginScreenState extends State<LoginScreen> {
                         _GoogleButton(
                           onPressed: _isLoading
                               ? null
-                              : () {
-                            // Connect your existing
-                            // Google auth here later.
+                              : () async {
+                            final navigator = Navigator.of(context);
+
+                            setState(() {
+                              _isLoading = true;
+                              _errorText = null;
+                            });
+
+                            try {
+                              final result = await authService.signInWithGoogle();
+
+                              if (result == null) {
+                                // user closed the Google popup
+                                return;
+                              }
+
+                              if (!mounted) {
+                                return;
+                              }
+
+                              navigator.pop();
+                            } catch (e) {
+                              if (!mounted) {
+                                return;
+                              }
+
+                              setState(() {
+                                _errorText = authService.friendlyError(e);
+                              });
+                            } finally {
+                              if (mounted) {
+                                setState(() {
+                                  _isLoading = false;
+                                });
+                              }
+                            }
                           },
                         ),
-
                         const SizedBox(height: 22),
 
                         Center(

@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+
 import 'firebase_options.dart';
 import 'core/app_theme.dart';
 import 'models/city_model.dart';
 import 'providers/auth_provider.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
+
 import 'screens/splash/splash_screen.dart';
 import 'screens/city_select/city_select_screen.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
+
 import 'widgets/main_shell.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   runApp(const _Bootstrap());
 }
 
@@ -55,9 +59,35 @@ class _Bootstrap extends StatelessWidget {
           );
         }
 
-        return const CityGuideApp();
+        return const _NotificationBootstrap();
       },
     );
+  }
+}
+
+// <-- MOVED OUTSIDE _Bootstrap
+class _NotificationBootstrap extends StatefulWidget {
+  const _NotificationBootstrap();
+
+  @override
+  State<_NotificationBootstrap> createState() => _NotificationBootstrapState();
+}
+
+class _NotificationBootstrapState extends State<_NotificationBootstrap> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    final token = await NotificationService().initialize();
+    debugPrint('FCM Token: $token');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const CityGuideApp();
   }
 }
 
@@ -86,17 +116,9 @@ class CityGuideApp extends StatelessWidget {
 
 /// Controls the main authentication/city flow:
 ///
-/// Logged out
-///     ↓
-/// Splash → Login
-///
-/// Logged in + no city
-///     ↓
-/// City Select
-///
-/// Logged in + city selected
-///     ↓
-/// Main App
+/// Logged out -> Splash -> Login
+/// Logged in + no city -> City Select
+/// Logged in + city selected -> Main App
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
 
@@ -109,23 +131,39 @@ class _AuthGateState extends State<AuthGate> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoggedIn =
-        context.watch<AuthProvider>().isLoggedIn;
+    final auth = context.watch<AuthProvider>();
 
     // ------------------------------------------------------
     // LOGGED OUT
     // ------------------------------------------------------
-
-    if (!isLoggedIn) {
+    if (!auth.isLoggedIn) {
       _city = null;
-
       return const SplashScreen();
     }
 
     // ------------------------------------------------------
-    // LOGGED IN BUT NO CITY SELECTED
+    // LOGGED IN, BUT STILL LOADING FIRESTORE USER PROFILE
     // ------------------------------------------------------
+    if (auth.isLoadingAppUser) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
 
+    // ------------------------------------------------------
+    // ADMIN
+    // ------------------------------------------------------
+    if (auth.isAdmin) {
+      _city = null;
+
+      return const AdminDashboardScreen();
+    }
+
+    // ------------------------------------------------------
+    // NORMAL USER — NO CITY SELECTED
+    // ------------------------------------------------------
     if (_city == null) {
       return CitySelectScreen(
         onCitySelected: (city) {
@@ -137,9 +175,8 @@ class _AuthGateState extends State<AuthGate> {
     }
 
     // ------------------------------------------------------
-    // LOGGED IN + CITY SELECTED
+    // NORMAL USER — CITY SELECTED
     // ------------------------------------------------------
-
     return MainShell(
       city: _city!,
       onChangeCity: () {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/app_theme.dart';
 import '../../models/attraction_model.dart';
 import '../../models/review_model.dart';
@@ -49,22 +50,19 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
             flexibleSpace: FlexibleSpaceBar(
               title: Text(attraction.name),
               background: attraction.imageUrls.isNotEmpty
-                  ? CachedNetworkImage(
-                imageUrl: attraction.imageUrls.first,
-                fit: BoxFit.cover,
-              )
+                  ? CachedNetworkImage(imageUrl: attraction.imageUrls.first, fit: BoxFit.cover)
                   : Container(color: Colors.black12),
             ),
             actions: [
-              if (currentUser != null)
+              if (currentUser!= null)
                 IconButton(
-                  icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_border),
+                  icon: Icon(_isFavorite? Icons.favorite : Icons.favorite_border),
                   onPressed: () {
-                    setState(() => _isFavorite = !_isFavorite);
+                    setState(() => _isFavorite =!_isFavorite);
                     _firestoreService.toggleFavorite(
                       userId: currentUser.uid,
                       attractionId: attraction.id,
-                      alreadyFavorited: !_isFavorite,
+                      alreadyFavorited:!_isFavorite,
                     );
                   },
                 ),
@@ -80,21 +78,16 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
                     children: [
                       const Icon(Icons.star, color: AppColors.accent, size: 20),
                       const SizedBox(width: 4),
-                      Text(
-                        '${attraction.avgRating.toStringAsFixed(1)} (${attraction.ratingCount} reviews)',
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
+                      Text('${attraction.avgRating.toStringAsFixed(1)} (${attraction.ratingCount} reviews)',
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.md),
                   Text(attraction.description),
                   const SizedBox(height: AppSpacing.md),
-                  if (attraction.address.isNotEmpty)
-                    _InfoRow(icon: Icons.location_on, text: attraction.address),
-                  if (attraction.openingHours.isNotEmpty)
-                    _InfoRow(icon: Icons.schedule, text: attraction.openingHours),
-                  if (attraction.contact.isNotEmpty)
-                    _InfoRow(icon: Icons.phone, text: attraction.contact),
+                  if (attraction.address.isNotEmpty) _InfoRow(icon: Icons.location_on, text: attraction.address),
+                  if (attraction.openingHours.isNotEmpty) _InfoRow(icon: Icons.schedule, text: attraction.openingHours),
+                  if (attraction.contact.isNotEmpty) _InfoRow(icon: Icons.phone, text: attraction.contact),
                   const Divider(height: AppSpacing.xl),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -103,9 +96,7 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
                       TextButton.icon(
                         icon: const Icon(Icons.rate_review_outlined),
                         label: const Text('Write a review'),
-                        onPressed: currentUser == null
-                            ? null
-                            : () => _showWriteReviewSheet(context, attraction.id),
+                        onPressed: currentUser == null? null : () => _showWriteReviewSheet(context, attraction.id),
                       ),
                     ],
                   ),
@@ -116,7 +107,7 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
           StreamBuilder<List<ReviewModel>>(
             stream: _firestoreService.reviewsForAttraction(attraction.id),
             builder: (context, snapshot) {
-              final reviews = snapshot.data ?? [];
+              final reviews = snapshot.data?? [];
               if (reviews.isEmpty) {
                 return const SliverToBoxAdapter(
                   child: Padding(
@@ -147,7 +138,6 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
   void _showWriteReviewSheet(BuildContext context, String attractionId) {
     double rating = 5;
     final textController = TextEditingController();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -171,29 +161,18 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
                     children: List.generate(5, (index) {
                       final starValue = index + 1;
                       return IconButton(
-                        icon: Icon(
-                          starValue <= rating ? Icons.star : Icons.star_border,
-                          color: AppColors.accent,
-                        ),
+                        icon: Icon(starValue <= rating? Icons.star : Icons.star_border, color: AppColors.accent),
                         onPressed: () => setSheetState(() => rating = starValue.toDouble()),
                       );
                     }),
                   ),
-                  TextField(
-                    controller: textController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(hintText: 'Share details of your experience'),
-                  ),
+                  TextField(controller: textController, maxLines: 3, decoration: const InputDecoration(hintText: 'Share details of your experience')),
                   const SizedBox(height: AppSpacing.md),
                   ElevatedButton(
                     onPressed: () async {
-                      await _firestoreService.addReview(
-                        attractionId: attractionId,
-                        rating: rating,
-                        text: textController.text.trim(),
-                      );
+                      await _firestoreService.addReview(attractionId: attractionId, rating: rating, text: textController.text.trim());
                       if (context.mounted) Navigator.pop(sheetContext);
-                      _load(); // refresh avgRating shown above
+                      _load();
                     },
                     child: const Text('Submit review'),
                   ),
@@ -210,9 +189,7 @@ class _AttractionDetailScreenState extends State<AttractionDetailScreen> {
 class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String text;
-
   const _InfoRow({required this.icon, required this.text});
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -241,10 +218,23 @@ class _ReviewTile extends StatelessWidget {
     required this.firestoreService,
   });
 
+  Future<void> _reportReview(BuildContext context) async {
+    try {
+      await FirebaseFirestore.instance.collection('attractions').doc(attractionId).collection('reviews').doc(review.id).update({
+        'isReported': true,
+        'reportCount': FieldValue.increment(1),
+      });
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Review reported to admin.')));
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not report review. Please try again.')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final liked = currentUserId != null && review.likedByUserIds.contains(currentUserId);
-
+    final liked = currentUserId!= null && review.likedByUserIds.contains(currentUserId);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
       child: Column(
@@ -255,14 +245,7 @@ class _ReviewTile extends StatelessWidget {
               Text(review.userName, style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(width: AppSpacing.sm),
               Row(
-                children: List.generate(
-                  5,
-                      (i) => Icon(
-                    i < review.rating.round() ? Icons.star : Icons.star_border,
-                    size: 14,
-                    color: AppColors.accent,
-                  ),
-                ),
+                children: List.generate(5, (i) => Icon(i < review.rating.round()? Icons.star : Icons.star_border, size: 14, color: AppColors.accent)),
               ),
             ],
           ),
@@ -272,7 +255,7 @@ class _ReviewTile extends StatelessWidget {
             children: [
               IconButton(
                 iconSize: 18,
-                icon: Icon(liked ? Icons.thumb_up : Icons.thumb_up_outlined),
+                icon: Icon(liked? Icons.thumb_up : Icons.thumb_up_outlined),
                 onPressed: currentUserId == null
                     ? null
                     : () => firestoreService.toggleReviewLike(
@@ -283,6 +266,31 @@ class _ReviewTile extends StatelessWidget {
                 ),
               ),
               Text('${review.likedByUserIds.length}'),
+              const SizedBox(width: 8),
+              TextButton.icon(
+                onPressed: currentUserId == null
+                    ? null
+                    : () async {
+                  final shouldReport = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogContext) {
+                      return AlertDialog(
+                        title: const Text('Report review?'),
+                        content: const Text('This review will be sent to an admin for moderation.'),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancel')),
+                          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Report')),
+                        ],
+                      );
+                    },
+                  );
+                  if (shouldReport == true) {
+                    await _reportReview(context);
+                  }
+                },
+                icon: const Icon(Icons.flag_outlined, size: 18),
+                label: const Text('Report'),
+              ),
             ],
           ),
           const Divider(),
