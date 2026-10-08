@@ -60,9 +60,9 @@ class _ForgotPasswordScreenState
                           end: Alignment.bottomCenter,
                           colors: [
                             AppColors.primaryDark
-                                .withOpacity(0.10),
+                                .withValues(alpha: 0.10),
                             AppColors.primaryDark
-                                .withOpacity(0.82),
+                                .withValues(alpha: 0.82),
                           ],
                         ),
                       ),
@@ -192,7 +192,7 @@ class _ForgotPasswordScreenState
                             color: (_isError
                                 ? AppColors.error
                                 : AppColors.primary)
-                                .withOpacity(0.08),
+                                .withValues(alpha: 0.08),
                             borderRadius:
                             BorderRadius.circular(14),
                           ),

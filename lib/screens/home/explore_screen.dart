@@ -173,7 +173,7 @@ class _HorizontalAttractionList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 170,
+      height: 220,
       child: StreamBuilder<List<AttractionModel>>(
         stream: stream,
         builder: (context, snapshot) {

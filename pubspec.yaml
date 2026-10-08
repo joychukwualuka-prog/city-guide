@@ -22,9 +22,11 @@ dependencies:
   # State management
   provider: ^6.1.2
 
-  # Maps & location (used from Status Report 2 onward)
-  google_maps_flutter: ^2.6.0
+  # Maps & location
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
   geolocator: ^11.0.0
+  url_launcher: ^6.2.5
 
   # UI helpers
   cached_network_image: ^3.3.1

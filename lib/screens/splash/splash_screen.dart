@@ -34,9 +34,9 @@ class SplashScreen extends StatelessWidget {
                   1.0,
                 ],
                 colors: [
-                  AppColors.primaryDark.withOpacity(0.05),
-                  AppColors.primaryDark.withOpacity(0.25),
-                  AppColors.primaryDark.withOpacity(0.95),
+                  AppColors.primaryDark.withValues(alpha: 0.05),
+                  AppColors.primaryDark.withValues(alpha: 0.25),
+                  AppColors.primaryDark.withValues(alpha: 0.95),
                 ],
               ),
             ),
@@ -56,15 +56,15 @@ class SplashScreen extends StatelessWidget {
                   // --------------------------------------------------
                   // LOGO
                   // --------------------------------------------------
-                  Row(
+                  const Row(
                     children: [
                       _LogoMark(
                         size: 52,
                       ),
 
-                      const SizedBox(width: 12),
+                       SizedBox(width: 12),
 
-                      const Column(
+                       Column(
                         crossAxisAlignment:
                         CrossAxisAlignment.start,
                         children: [
@@ -145,10 +145,10 @@ class SplashScreen extends StatelessWidget {
                           BorderRadius.circular(28),
                         ),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment:
                         MainAxisAlignment.center,
-                        children: const [
+                        children:  [
                           Text(
                             'Get Started',
                             style: TextStyle(
@@ -215,9 +215,9 @@ class _LogoMark extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         border: Border.all(
-          color: Colors.white.withOpacity(0.7),
+          color: Colors.white.withValues(alpha: 0.7),
           width: 1.5,
         ),
       ),

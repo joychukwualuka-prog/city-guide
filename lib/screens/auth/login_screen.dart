@@ -65,9 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           end: Alignment.bottomCenter,
                           colors: [
                             AppColors.primaryDark
-                                .withOpacity(0.10),
+                                .withValues(alpha: 0.10),
                             AppColors.primaryDark
-                                .withOpacity(0.80),
+                                .withValues(alpha: 0.80),
                           ],
                         ),
                       ),
@@ -541,7 +541,7 @@ class _ErrorBox extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.08),
+        color: AppColors.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -576,7 +576,7 @@ class _OrDivider extends StatelessWidget {
       children: [
         Expanded(
           child: Divider(
-            color: Colors.black.withOpacity(0.10),
+            color: Colors.black.withValues(alpha: 0.10),
           ),
         ),
         const Padding(
@@ -591,7 +591,7 @@ class _OrDivider extends StatelessWidget {
         ),
         Expanded(
           child: Divider(
-            color: Colors.black.withOpacity(0.10),
+            color: Colors.black.withValues(alpha: 0.10),
           ),
         ),
       ],
@@ -617,15 +617,15 @@ class _GoogleButton extends StatelessWidget {
           backgroundColor: Colors.white,
           foregroundColor: AppColors.textPrimary,
           side: BorderSide(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(26),
           ),
         ),
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
+          children:  [
             Text(
               'G',
               style: TextStyle(
