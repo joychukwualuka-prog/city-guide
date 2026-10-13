@@ -32,9 +32,14 @@ ExploreScreen(city: widget.city),
 SearchScreen(city: widget.city),
 GoogleMapScreen(city: widget.city),
 const FavoritesScreen(),
-ProfileScreen(
-onChangeCity: widget.onChangeCity,
-),
+  ProfileScreen(
+    onChangeCity: widget.onChangeCity,
+    onOpenFavorites: () {
+      setState(() {
+        _index = 3;  // 3 = Favorites tab
+      });
+    },
+  ),
 ];
 
 return Scaffold(
