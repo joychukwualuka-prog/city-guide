@@ -1,8 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// One category field covers attractions, restaurants, hotels and
-/// events, per the spec's "Attraction Listings" requirement, so we
-/// don't need four near-identical collections.
 enum AttractionCategory { attraction, restaurant, hotel, event }
 
 AttractionCategory categoryFromString(String value) {
@@ -10,6 +7,17 @@ AttractionCategory categoryFromString(String value) {
         (c) => c.name == value,
     orElse: () => AttractionCategory.attraction,
   );
+}
+
+double _toDouble(dynamic v) {
+  if (v is num) return v.toDouble();
+  return double.tryParse('$v') ?? 0;
+}
+
+int? _toIntOrNull(dynamic v) {
+  if (v == null) return null;
+  if (v is num) return v.toInt();
+  return int.tryParse('$v');
 }
 
 class AttractionModel {
@@ -25,6 +33,9 @@ class AttractionModel {
   final String openingHours;
   final double avgRating;
   final int ratingCount;
+  final String website;
+  final int? priceLevel;
+  final Map<String, String>? weeklyHours;
 
   AttractionModel({
     required this.id,
@@ -39,6 +50,9 @@ class AttractionModel {
     required this.openingHours,
     this.avgRating = 0,
     this.ratingCount = 0,
+    this.website = '',
+    this.priceLevel,
+    this.weeklyHours,
   });
 
   factory AttractionModel.fromMap(String id, Map<String, dynamic> map) {
@@ -53,10 +67,11 @@ class AttractionModel {
       address: map['address'] ?? '',
       contact: map['contact'] ?? '',
       openingHours: map['openingHours'] ?? '',
-      avgRating: (map['avgRating'] ?? 0).toDouble(),
-      // Firestore can hand this back as an int OR a double depending on
-      // how it was typed in the console — (...).toInt() handles both.
-      ratingCount: ((map['ratingCount'] ?? 0) as num).toInt(),
+      avgRating: _toDouble(map['avgRating']),
+      ratingCount: _toIntOrNull(map['ratingCount']) ?? 0,
+      website: map['website']?.toString() ?? '',
+      priceLevel: _toIntOrNull(map['priceLevel']),
+      weeklyHours: (map['weeklyHours'] as Map?)?.map((k, v) => MapEntry(k.toString(), v.toString())),
     );
   }
 
@@ -73,6 +88,9 @@ class AttractionModel {
       'openingHours': openingHours,
       'avgRating': avgRating,
       'ratingCount': ratingCount,
+      'website': website,
+      'priceLevel': priceLevel,
+      'weeklyHours': weeklyHours,
     };
   }
 }

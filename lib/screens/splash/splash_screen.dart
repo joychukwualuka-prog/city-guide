@@ -419,7 +419,9 @@ class SplashScreen extends StatelessWidget {
   }
 }
 
-// Temporary logo until your real logo is ready.
+
+
+
 class _LogoMark extends StatelessWidget {
   final double size;
 
@@ -429,21 +431,25 @@ class _LogoMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.15),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.7),
-          width: 1.5,
-        ),
-      ),
-      child: Icon(
-        Icons.location_city_rounded,
-        color: Colors.white,
-        size: size * 0.5,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(size * 0.22),
+      child: Image.asset(
+        'assets/images/city_guide_logo.png',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: size,
+            height: size,
+            color: AppColors.primaryDark,
+            child: Icon(
+              Icons.location_city_rounded,
+              color: Colors.white,
+              size: size * 0.5,
+            ),
+          );
+        },
       ),
     );
   }
