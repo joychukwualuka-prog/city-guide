@@ -45,17 +45,13 @@ class AdminDashboardScreen extends StatelessWidget {
                   // ------------------------------------------------
                   Row(
                     children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: const Icon(
-                          Icons.location_city_rounded,
-                          color: AppColors.primaryDark,
-                          size: 21,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(11),
+                        child: Image.asset(
+                          'assets/images/city_pages_logo.png',
+                          width: 38,
+                          height: 38,
+                          fit: BoxFit.contain,
                         ),
                       ),
 

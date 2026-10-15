@@ -79,33 +79,264 @@ class FirestoreService {
     required String text,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) throw Exception('Must be signed in to leave a review.');
 
-    final attractionRef = _db.collection('attractions').doc(attractionId);
+    if (user == null) {
+      throw Exception(
+        'Must be signed in to leave a review.',
+      );
+    }
+
+    final attractionRef = _db
+        .collection('attractions')
+        .doc(attractionId);
+
+    final reviewRef =
+    attractionRef.collection('reviews').doc();
 
     await _db.runTransaction((tx) async {
-      final reviewRef = attractionRef.collection('reviews').doc();
-      tx.set(reviewRef, {
-        'userId': user.uid,
-        'userName': user.displayName ?? 'Anonymous',
-        'rating': rating,
-        'text': text,
-        'likedByUserIds': <String>[],
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      final attractionSnap =
+      await tx.get(attractionRef);
 
-      // Recompute the attraction's running average rating.
-      final attractionSnap = await tx.get(attractionRef);
-      final data = attractionSnap.data() ?? {};
-      final currentCount = (data['ratingCount'] ?? 0) as int;
-      final currentAvg = (data['avgRating'] ?? 0).toDouble();
-      final newCount = currentCount + 1;
-      final newAvg = ((currentAvg * currentCount) + rating) / newCount;
+      if (!attractionSnap.exists) {
+        throw Exception(
+          'Attraction not found.',
+        );
+      }
 
-      tx.update(attractionRef, {
-        'ratingCount': newCount,
-        'avgRating': newAvg,
-      });
+      final data =
+          attractionSnap.data() ?? {};
+
+      final currentCount =
+      (data['ratingCount'] ?? 0) as int;
+
+      final currentAvg =
+      (data['avgRating'] ?? 0).toDouble();
+
+      final newCount =
+          currentCount + 1;
+
+      final newAvg =
+          ((currentAvg * currentCount) + rating) /
+              newCount;
+
+      tx.set(
+        reviewRef,
+        {
+          'userId': user.uid,
+          'userName':
+          user.displayName ?? 'Anonymous',
+          'rating': rating,
+          'text': text.trim(),
+          'likedByUserIds': <String>[],
+
+          'isReported': false,
+          'isFlagged': false,
+          'reportCount': 0,
+
+          'createdAt':
+          FieldValue.serverTimestamp(),
+        },
+      );
+
+      tx.update(
+        attractionRef,
+        {
+          'ratingCount': newCount,
+          'avgRating': newAvg,
+        },
+      );
+    });
+  }
+  Future<void> editReview({
+    required String attractionId,
+    required String reviewId,
+    required double rating,
+    required String text,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception(
+        'Must be signed in to edit a review.',
+      );
+    }
+
+    final attractionRef = _db
+        .collection('attractions')
+        .doc(attractionId);
+
+    final reviewRef = attractionRef
+        .collection('reviews')
+        .doc(reviewId);
+
+    await _db.runTransaction((tx) async {
+      final reviewSnap =
+      await tx.get(reviewRef);
+
+      if (!reviewSnap.exists) {
+        throw Exception(
+          'Review not found.',
+        );
+      }
+
+      final attractionSnap =
+      await tx.get(attractionRef);
+
+      if (!attractionSnap.exists) {
+        throw Exception(
+          'Attraction not found.',
+        );
+      }
+
+      final reviewData =
+      reviewSnap.data()!;
+
+      final reviewOwnerId =
+      reviewData['userId'] as String?;
+
+      if (reviewOwnerId != user.uid) {
+        throw Exception(
+          'You can only edit your own review.',
+        );
+      }
+
+      final oldRating =
+      (reviewData['rating'] ?? 0).toDouble();
+
+      final attractionData =
+          attractionSnap.data() ?? {};
+
+      final ratingCount =
+      (attractionData['ratingCount'] ?? 0)
+      as int;
+
+      final currentAvg =
+      (attractionData['avgRating'] ?? 0)
+          .toDouble();
+
+      double newAverage = rating;
+
+      if (ratingCount > 0) {
+        final currentTotal =
+            currentAvg * ratingCount;
+
+        final newTotal =
+            currentTotal - oldRating + rating;
+
+        newAverage =
+            newTotal / ratingCount;
+      }
+
+      tx.update(
+        reviewRef,
+        {
+          'rating': rating,
+          'text': text.trim(),
+          'updatedAt':
+          FieldValue.serverTimestamp(),
+        },
+      );
+
+      tx.update(
+        attractionRef,
+        {
+          'avgRating': newAverage,
+        },
+      );
+    });
+  }
+  Future<void> deleteReview({
+    required String attractionId,
+    required String reviewId,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      throw Exception(
+        'Must be signed in to delete a review.',
+      );
+    }
+
+    final attractionRef = _db
+        .collection('attractions')
+        .doc(attractionId);
+
+    final reviewRef = attractionRef
+        .collection('reviews')
+        .doc(reviewId);
+
+    await _db.runTransaction((tx) async {
+      final reviewSnap =
+      await tx.get(reviewRef);
+
+      if (!reviewSnap.exists) {
+        throw Exception(
+          'Review not found.',
+        );
+      }
+
+      final attractionSnap =
+      await tx.get(attractionRef);
+
+      if (!attractionSnap.exists) {
+        throw Exception(
+          'Attraction not found.',
+        );
+      }
+
+      final reviewData =
+      reviewSnap.data()!;
+
+      final reviewOwnerId =
+      reviewData['userId'] as String?;
+
+      if (reviewOwnerId != user.uid) {
+        throw Exception(
+          'You can only delete your own review.',
+        );
+      }
+
+      final deletedRating =
+      (reviewData['rating'] ?? 0).toDouble();
+
+      final attractionData =
+          attractionSnap.data() ?? {};
+
+      final currentCount =
+      (attractionData['ratingCount'] ?? 0)
+      as int;
+
+      final currentAvg =
+      (attractionData['avgRating'] ?? 0)
+          .toDouble();
+
+      final newCount =
+      currentCount > 0
+          ? currentCount - 1
+          : 0;
+
+      double newAverage = 0;
+
+      if (newCount > 0) {
+        final currentTotal =
+            currentAvg * currentCount;
+
+        final newTotal =
+            currentTotal - deletedRating;
+
+        newAverage =
+            newTotal / newCount;
+      }
+
+      tx.delete(reviewRef);
+
+      tx.update(
+        attractionRef,
+        {
+          'ratingCount': newCount,
+          'avgRating': newAverage,
+        },
+      );
     });
   }
 

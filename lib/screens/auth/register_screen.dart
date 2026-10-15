@@ -488,27 +488,21 @@ class _RegisterScreenState
   }
 }
 
+
 class _RegisterLogo extends StatelessWidget {
+  const _RegisterLogo();
+
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return Image.asset(
+      'assets/images/city_guide_logo.png',
       width: 42,
       height: 42,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: Colors.white,
-          width: 1.5,
-        ),
-      ),
-      child: const Icon(
-        Icons.location_city_rounded,
-        color: Colors.white,
-        size: 22,
-      ),
+      fit: BoxFit.contain,
     );
   }
 }
+
 
 class _RegisterLabel extends StatelessWidget {
   final String text;
