@@ -37,7 +37,8 @@ class _AttractionDetailScreenState
   }
 
   Future<void> _load() async {
-    final attraction = await _firestoreService.getAttraction(
+    final attraction =
+    await _firestoreService.getAttraction(
       widget.attractionId,
     );
 
@@ -119,8 +120,7 @@ class _AttractionDetailScreenState
               ),
               child: Column(
                 crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
+                CrossAxisAlignment.start,
                 children: [
                   Text(
                     attraction.name,
@@ -133,8 +133,7 @@ class _AttractionDetailScreenState
                   ),
 
                   const SizedBox(
-                    height:
-                    AppSpacing.sm,
+                    height: AppSpacing.sm,
                   ),
 
                   Row(
@@ -145,38 +144,32 @@ class _AttractionDetailScreenState
                         AppColors.accent,
                         size: 20,
                       ),
-
                       const SizedBox(
                         width: 4,
                       ),
-
                       Text(
                         '${attraction.avgRating.toStringAsFixed(1)} '
                             '(${attraction.ratingCount} reviews)',
                         style:
                         const TextStyle(
                           fontWeight:
-                          FontWeight
-                              .w600,
+                          FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
 
                   const SizedBox(
-                    height:
-                    AppSpacing.md,
+                    height: AppSpacing.md,
                   ),
 
-                  // Action buttons
                   _ActionButtons(
                     attraction:
                     attraction,
                   ),
 
                   const SizedBox(
-                    height:
-                    AppSpacing.md,
+                    height: AppSpacing.md,
                   ),
 
                   Text(
@@ -184,8 +177,7 @@ class _AttractionDetailScreenState
                   ),
 
                   const SizedBox(
-                    height:
-                    AppSpacing.md,
+                    height: AppSpacing.md,
                   ),
 
                   if (attraction
@@ -202,8 +194,10 @@ class _AttractionDetailScreenState
                       .openingHours
                       .isNotEmpty)
                     _InfoRow(
-                      icon: Icons.schedule,
-                      text: attraction
+                      icon:
+                      Icons.schedule,
+                      text:
+                      attraction
                           .openingHours,
                     ),
 
@@ -211,7 +205,8 @@ class _AttractionDetailScreenState
                       .contact
                       .isNotEmpty)
                     _InfoRow(
-                      icon: Icons.phone,
+                      icon:
+                      Icons.phone,
                       text:
                       attraction.contact,
                     ),
@@ -242,13 +237,13 @@ class _AttractionDetailScreenState
                         TextStyle(
                           fontSize: 18,
                           fontWeight:
-                          FontWeight
-                              .bold,
+                          FontWeight.bold,
                         ),
                       ),
 
                       TextButton.icon(
-                        icon: const Icon(
+                        icon:
+                        const Icon(
                           Icons
                               .rate_review_outlined,
                         ),
@@ -342,6 +337,7 @@ class _AttractionDetailScreenState
       String attractionId,
       ) {
     double rating = 5;
+    bool isSubmitting = false;
 
     final textController =
     TextEditingController();
@@ -351,12 +347,12 @@ class _AttractionDetailScreenState
       isScrollControlled: true,
       builder: (sheetContext) {
         return Padding(
-          padding:
-          EdgeInsets.only(
+          padding: EdgeInsets.only(
             left: AppSpacing.md,
             right: AppSpacing.md,
             top: AppSpacing.md,
-            bottom: MediaQuery.of(
+            bottom:
+            MediaQuery.of(
               sheetContext,
             )
                 .viewInsets
@@ -365,7 +361,7 @@ class _AttractionDetailScreenState
           ),
           child: StatefulBuilder(
             builder: (
-                context,
+                innerContext,
                 setSheetState,
                 ) {
               return Column(
@@ -408,7 +404,10 @@ class _AttractionDetailScreenState
                             AppColors
                                 .accent,
                           ),
-                          onPressed: () {
+                          onPressed:
+                          isSubmitting
+                              ? null
+                              : () {
                             setSheetState(
                                   () {
                                 rating =
@@ -426,6 +425,8 @@ class _AttractionDetailScreenState
                     controller:
                     textController,
                     maxLines: 3,
+                    enabled:
+                    !isSubmitting,
                     decoration:
                     const InputDecoration(
                       hintText:
@@ -438,34 +439,120 @@ class _AttractionDetailScreenState
                     AppSpacing.md,
                   ),
 
-                  ElevatedButton(
-                    onPressed:
-                        () async {
-                      await _firestoreService
-                          .addReview(
-                        attractionId:
-                        attractionId,
-                        rating: rating,
-                        text:
+                  SizedBox(
+                    width:
+                    double.infinity,
+                    child:
+                    ElevatedButton(
+                      onPressed:
+                      isSubmitting
+                          ? null
+                          : () async {
+                        final reviewText =
                         textController
                             .text
-                            .trim(),
-                      );
+                            .trim();
 
-                      if (!sheetContext
-                          .mounted) {
-                        return;
-                      }
+                        if (reviewText
+                            .isEmpty) {
+                          ScaffoldMessenger.of(
+                            sheetContext,
+                          ).showSnackBar(
+                            const SnackBar(
+                              content:
+                              Text(
+                                'Please write something about your experience.',
+                              ),
+                            ),
+                          );
 
-                      Navigator.pop(
-                        sheetContext,
-                      );
+                          return;
+                        }
 
-                      await _load();
-                    },
-                    child:
-                    const Text(
-                      'Submit review',
+                        setSheetState(
+                              () {
+                            isSubmitting =
+                            true;
+                          },
+                        );
+
+                        try {
+                          await _firestoreService
+                              .addReview(
+                            attractionId:
+                            attractionId,
+                            rating:
+                            rating,
+                            text:
+                            reviewText,
+                          );
+
+                          if (!sheetContext
+                              .mounted) {
+                            return;
+                          }
+
+                          Navigator.pop(
+                            sheetContext,
+                          );
+
+                          await _load();
+
+                          if (!mounted) {
+                            return;
+                          }
+
+                          ScaffoldMessenger.of(
+                            this.context,
+                          ).showSnackBar(
+                            const SnackBar(
+                              content:
+                              Text(
+                                'Review submitted successfully.',
+                              ),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!sheetContext
+                              .mounted) {
+                            return;
+                          }
+
+                          setSheetState(
+                                () {
+                              isSubmitting =
+                              false;
+                            },
+                          );
+
+                          ScaffoldMessenger.of(
+                            sheetContext,
+                          ).showSnackBar(
+                            SnackBar(
+                              content:
+                              Text(
+                                'Could not submit review: $e',
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                      child:
+                      isSubmitting
+                          ? const SizedBox(
+                        width:
+                        20,
+                        height:
+                        20,
+                        child:
+                        CircularProgressIndicator(
+                          strokeWidth:
+                          2,
+                        ),
+                      )
+                          : const Text(
+                        'Submit review',
+                      ),
                     ),
                   ),
                 ],
@@ -549,9 +636,11 @@ class _ActionButtons
             openDirections(
               context,
               lat: attraction
-                  .location.latitude,
+                  .location
+                  .latitude,
               lng: attraction
-                  .location.longitude,
+                  .location
+                  .longitude,
               label:
               attraction.name,
             );
@@ -599,7 +688,8 @@ class _InfoRow
           Icon(
             icon,
             size: 18,
-            color: AppColors
+            color:
+            AppColors
                 .textSecondary,
           ),
 
@@ -649,7 +739,8 @@ class _ReviewTile
       BuildContext context,
       ) async {
     try {
-      await FirebaseFirestore.instance
+      await FirebaseFirestore
+          .instance
           .collection(
         'attractions',
       )
@@ -857,7 +948,8 @@ class _ReviewTile
     textController.dispose();
 
     try {
-      await firestoreService.editReview(
+      await firestoreService
+          .editReview(
         attractionId:
         attractionId,
         reviewId:
@@ -1011,7 +1103,8 @@ class _ReviewTile
       ) {
     final liked =
         currentUserId != null &&
-            review.likedByUserIds
+            review
+                .likedByUserIds
                 .contains(
               currentUserId,
             );
@@ -1041,8 +1134,7 @@ class _ReviewTile
                   children: [
                     Flexible(
                       child: Text(
-                        review
-                            .userName,
+                        review.userName,
                         style:
                         const TextStyle(
                           fontWeight:
@@ -1061,19 +1153,20 @@ class _ReviewTile
                       children:
                       List.generate(
                         5,
-                            (i) => Icon(
-                          i <
-                              review
-                                  .rating
-                                  .round()
-                              ? Icons.star
-                              : Icons
-                              .star_border,
-                          size: 14,
-                          color:
-                          AppColors
-                              .accent,
-                        ),
+                            (i) =>
+                            Icon(
+                              i <
+                                  review
+                                      .rating
+                                      .round()
+                                  ? Icons.star
+                                  : Icons
+                                  .star_border,
+                              size: 14,
+                              color:
+                              AppColors
+                                  .accent,
+                            ),
                       ),
                     ),
                   ],
@@ -1116,8 +1209,7 @@ class _ReviewTile
                                   .edit_outlined,
                             ),
                             SizedBox(
-                              width:
-                              10,
+                              width: 10,
                             ),
                             Text(
                               'Edit Review',
@@ -1125,6 +1217,7 @@ class _ReviewTile
                           ],
                         ),
                       ),
+
                       PopupMenuItem(
                         value:
                         'delete',
@@ -1138,8 +1231,7 @@ class _ReviewTile
                                   .error,
                             ),
                             SizedBox(
-                              width:
-                              10,
+                              width: 10,
                             ),
                             Text(
                               'Delete Review',
